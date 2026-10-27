@@ -1,10 +1,10 @@
 """Bundled sample datasets for the agent to analyze.
 
 All datasets ship inside scikit-learn, so the demo runs with zero
-external downloads or credentials beyond the Claude API key.
+external downloads.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pandas as pd
 from sklearn.datasets import load_breast_cancer, load_diabetes, load_wine
@@ -17,6 +17,8 @@ class DatasetBundle:
     target_column: str
     task_type: str  # "classification" or "regression"
     description: str
+    # Label -> human-readable name, for classification targets.
+    class_names: dict = field(default_factory=dict)
 
 
 _REGISTRY = {
@@ -51,10 +53,14 @@ def load_dataset(name: str) -> DatasetBundle:
     loader_fn, task_type, description = _REGISTRY[name]
     bunch = loader_fn(as_frame=True)
     df = bunch.frame.copy()
+    class_names = {}
+    if task_type == "classification":
+        class_names = {i: str(n) for i, n in enumerate(bunch.target_names)}
     return DatasetBundle(
         name=name,
         df=df,
         target_column="target",
         task_type=task_type,
         description=description,
+        class_names=class_names,
     )
